@@ -182,7 +182,6 @@ window.onload = function () {
     const quantity = parseInt(quantityElement.textContent, 10);
     const price = parseFloat(cartItem.querySelector('.cart-item-price').textContent.replace('Rs.', ''));
     const total = quantity * price;
-
     cartItem.querySelector('.cart-item-total').textContent = `Rs.${total.toFixed(2)}`;
 
     if (quantity === 0) {
