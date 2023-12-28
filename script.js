@@ -94,26 +94,29 @@ window.onload = function () {
 
             initializeQuantityButtons();
         } else if (targetElement.classList.contains('remove-item')) {
-            const itemToRemove = targetElement.closest('p');
-            const removedPrice = parseFloat(itemToRemove.querySelector('.cart-item-price').textContent.replace('Rs.', ''));
-            const removedQuantity = parseInt(itemToRemove.querySelector('.quantity').textContent, 10);
-
-            sideMenu.removeChild(itemToRemove);
-
-            totalAmount -= removedPrice * removedQuantity;
-
-            cartValue.innerHTML = sideMenu.childElementCount;
-            totalDisplay.innerHTML = `Rs.${totalAmount.toFixed(2)}`;
-
-            cartValue.innerHTML = --cartValue.innerHTML;
-
-            if (sideMenu.childElementCount === 0) {
-                const initialText = document.createElement('p');
-                initialText.textContent = 'Your cart is empty.';
-                sideMenu.appendChild(initialText);
-                emptyCartMsg.style.display = 'none';
+            const cartItem = targetElement.closest('p');
+        
+            if (cartItem) {
+                const removedPrice = parseFloat(cartItem.querySelector('.cart-item-price').textContent.replace('Rs.', ''));
+                const removedQuantity = parseInt(cartItem.querySelector('.quantity').textContent, 10);
+        
+                cartItem.parentNode.removeChild(cartItem);
+        
+                totalAmount -= removedPrice * removedQuantity;
+        
+                cartValue.innerHTML = sideMenu.childElementCount;
+                totalDisplay.innerHTML = `Rs.${totalAmount.toFixed(2)}`;
+        
+                if (sideMenu.childElementCount === 0) {
+                    const initialText = document.createElement('p');
+                    initialText.textContent = 'Your cart is empty.';
+                    sideMenu.appendChild(initialText);
+                    emptyCartMsg.style.display = 'none';
+                }
             }
         }
+        
+        
     });
 
     function findCartItem(productTitle) {
@@ -175,32 +178,30 @@ window.onload = function () {
     
     
     function updateCartItemTotal(cartItem) {
-        const quantity = parseInt(cartItem.querySelector('.quantity').textContent, 10);
-        const price = parseFloat(cartItem.querySelector('.cart-item-price').textContent.replace('Rs.', ''));
-        const total = quantity * price;
+    const quantityElement = cartItem.querySelector('.quantity');
+    const quantity = parseInt(quantityElement.textContent, 10);
+    const price = parseFloat(cartItem.querySelector('.cart-item-price').textContent.replace('Rs.', ''));
+    const total = quantity * price;
 
-        cartItem.querySelector('.cart-item-total').textContent = `Rs.${total.toFixed(2)}`;
+    cartItem.querySelector('.cart-item-total').textContent = `Rs.${total.toFixed(2)}`;
 
-        if (quantity === 0) {
-            sideMenu.removeChild(cartItem.parentElement);
-
-            const cartValue = document.querySelector('.header_cart span');
-            cartValue.innerHTML = sideMenu.childElementCount;
-
-            const totalDisplay = document.getElementById('amt');
-            const totalAmount = Array.from(document.querySelectorAll('.cart-item-total'))
-                .reduce((sum, cartItem) => sum + parseFloat(cartItem.textContent.replace('Rs.', '')), 0);
-            totalDisplay.innerHTML = `Rs.${totalAmount.toFixed(2)}`;
-
-            if (sideMenu.childElementCount === 0) {
-                const emptyCartMsg = document.getElementById('emptyCartMsg');
-                emptyCartMsg.style.display = 'block';
-            }
-        } else {
-            const totalDisplay = document.getElementById('amt');
-            const totalAmount = Array.from(document.querySelectorAll('.cart-item-total'))
-                .reduce((sum, cartItem) => sum + parseFloat(cartItem.textContent.replace('Rs.', '')), 0);
-            totalDisplay.innerHTML = `Rs.${totalAmount.toFixed(2)}`;
-        }
+    if (quantity === 0) {
+        sideMenu.removeChild(cartItem.parentElement);
     }
+
+    const cartValue = document.querySelector('.header_cart span');
+    cartValue.innerHTML = sideMenu.childElementCount;
+
+    const totalDisplay = document.getElementById('amt');
+    const totalAmount = Array.from(document.querySelectorAll('.cart-item-total'))
+        .reduce((sum, cartItem) => sum + parseFloat(cartItem.textContent.replace('Rs.', '')), 0);
+
+    totalDisplay.innerHTML = `Rs.${totalAmount.toFixed(2)}`;
+
+    if (sideMenu.childElementCount === 0) {
+        const emptyCartMsg = document.getElementById('emptyCartMsg');
+        emptyCartMsg.style.display = 'block';
+    }
+}
+
 };
