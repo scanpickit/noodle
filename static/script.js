@@ -31,7 +31,6 @@ window.onload = function () {
     const totalDisplay = document.getElementById('amt');
     const emptyCartMsg = document.getElementById('emptyCartMsg');
     const speedAnimation = 1000;
-    const submitbtn = document.querySelector('.submit-btn');
 
     let totalAmount = 0;
     let totalQuantity = 0;
@@ -221,22 +220,20 @@ window.onload = function () {
         const itemTotalPrice = quantity * productPrice;
         cartItem.querySelector('.cart-item-total').textContent = `Rs.${itemTotalPrice.toFixed(2)}`;
     }
-    submitbtn.addEventListener('click',()=>{
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/create_order';
-        console.log(totalAmount);
-        console.log(totalQuantity);
-        
 
-        var hiddenField = document.createElement('input');
-        hiddenField.type = 'hidden';
-        hiddenField.name = 'order_amount';
-        hiddenField.value = totalAmount.toString();;
+    // Submit button click event
+    const submitBtn = document.querySelector('.submit-btn');
+    submitBtn.addEventListener('click', function () {
+        const cartItems = Array.from(sideMenu.querySelectorAll('.cart-item-title'));
+        const cartQuantities = Array.from(sideMenu.querySelectorAll('.quantity'));
 
-        form.appendChild(hiddenField);
-        document.body.appendChild(form);
-        form.submit();
-    })
-    
+        const cartData = {};
+
+        cartItems.forEach((item, index) => {
+            const productTitle = item.textContent.trim();
+            const productQuantity = parseInt(cartQuantities[index].textContent, 10);
+            cartData[productTitle] = productQuantity;
+        });
+        console.log(cartData);
+    });
 };
