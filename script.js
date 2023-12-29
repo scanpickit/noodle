@@ -33,6 +33,7 @@ window.onload = function () {
     const speedAnimation = 1000;
 
     let totalAmount = 0;
+    let totalQuantity = 0;
 
     document.addEventListener('click', function (e) {
         const targetElement = e.target;
@@ -46,7 +47,7 @@ window.onload = function () {
             const existingCartItem = findCartItem(productTitle);
 
             if (existingCartItem) {
-                incrementCartItem(existingCartItem);
+                incrementCartItem(existingCartItem, productPrice);
             } else {
                 addToCart(productTitle, productPrice, productImageSrc);
             }
@@ -87,26 +88,20 @@ window.onload = function () {
                 productImageFly.style.opacity = `0.5`;
             }, 0);
 
+            totalQuantity += 1;
             totalAmount += productPrice;
-
-            cartValue.innerHTML = parseInt(cartValue.innerHTML, 10) + 1;
-            totalDisplay.innerHTML = `Rs.${totalAmount.toFixed(2)}`;
-
-            initializeQuantityButtons();
         } else if (targetElement.classList.contains('remove-item')) {
             const cartItem = targetElement.closest('p');
-        
+
             if (cartItem) {
-                const removedPrice = parseFloat(cartItem.querySelector('.cart-item-price').textContent.replace('Rs.', ''));
                 const removedQuantity = parseInt(cartItem.querySelector('.quantity').textContent, 10);
-        
+                const removedPrice = parseFloat(cartItem.querySelector('.cart-item-price').textContent.replace('Rs.', ''));
+
                 cartItem.parentNode.removeChild(cartItem);
-        
+
+                totalQuantity -= removedQuantity;
                 totalAmount -= removedPrice * removedQuantity;
-        
-                cartValue.innerHTML = sideMenu.childElementCount;
-                totalDisplay.innerHTML = `Rs.${totalAmount.toFixed(2)}`;
-        
+
                 if (sideMenu.childElementCount === 0) {
                     const initialText = document.createElement('p');
                     initialText.textContent = 'Your cart is empty.';
@@ -115,27 +110,53 @@ window.onload = function () {
                 }
             }
         }
-        
-        
+
+        updateHeaderCart();
+        updateSideMenuTotal();
     });
 
     function findCartItem(productTitle) {
         return Array.from(sideMenu.querySelectorAll('.cart-item-title')).find(title => title.textContent === productTitle);
     }
 
-    function incrementCartItem(cartItemTitle) {
+    function incrementCartItem(cartItemTitle, productPrice) {
         const cartItem = findCartItem(cartItemTitle);
         const quantityElement = cartItem.closest('p').querySelector('.quantity');
         const quantity = parseInt(quantityElement.textContent, 10);
         quantityElement.textContent = quantity + 1;
 
-        updateCartItemTotal(cartItem.closest('p'));
+        updateCartItemTotal(cartItem, quantity + 1, productPrice);
+
+        totalQuantity += 1;
+        totalAmount += productPrice;
+
+        const productImage = cartItem.querySelector('.cart-item-image');
+        const productImageFly = productImage.cloneNode(true);
+
+        productImageFly.style.cssText = `
+            position: fixed;
+            left: ${productImage.getBoundingClientRect().left}px;
+            top: ${productImage.getBoundingClientRect().top}px;
+            width: ${productImage.offsetWidth}px;
+            height: ${productImage.offsetHeight}px;
+            transition: all ${speedAnimation}ms ease;
+        `;
+
+        document.body.append(productImageFly);
+
+        setTimeout(() => {
+            productImageFly.style.left = `${cartPos.left}px`;
+            productImageFly.style.top = `${cartPos.top}px`;
+            productImageFly.style.width = `0px`;
+            productImageFly.style.height = `0px`;
+            productImageFly.style.opacity = `0.5`;
+        }, 0);
     }
 
     function addToCart(productTitle, productPrice, productImageSrc) {
         const cartItem = document.createElement('div');
-        const quantity = 1; // Each new item starts with a quantity of 1
-    
+        const quantity = 1;
+
         cartItem.innerHTML = `
             <p>
                 <img src="${productImageSrc}" alt="Product Image" class="cart-item-image">
@@ -152,55 +173,51 @@ window.onload = function () {
                 <button class="remove-item">Remove</button>
             </p>
         `;
-    
+
         sideMenu.appendChild(cartItem);
-        
-        // Attach initializeQuantityButtons only once for each new item
+
         const quantityButtons = cartItem.querySelectorAll('.quantity-group button');
         quantityButtons.forEach(button => {
             button.addEventListener('click', function () {
                 const cartItem = this.closest('p');
                 const quantityElement = cartItem.querySelector('.quantity');
-                const quantity = parseInt(quantityElement.textContent, 10);
-    
+                let quantity = parseInt(quantityElement.textContent, 10);
+
                 if (this.textContent === '-') {
-                    const newQuantity = Math.max(0, quantity - 1);
-                    quantityElement.textContent = newQuantity;
-                    updateCartItemTotal(cartItem);
+                    quantity = Math.max(0, quantity - 1);
+                    quantityElement.textContent = quantity;
                 } else if (this.textContent === '+') {
-                    const newQuantity = quantity + 1;
-                    quantityElement.textContent = newQuantity;
-                    updateCartItemTotal(cartItem);
+                    quantity += 1;
+                    quantityElement.textContent = quantity;
                 }
+
+                updateCartItemTotal(cartItem, quantity, productPrice);
+
+                if (quantity === 0) {
+                    cartItem.parentNode.removeChild(cartItem);
+                }
+
+                totalQuantity = Array.from(sideMenu.querySelectorAll('.quantity')).reduce((sum, el) => sum + parseInt(el.textContent, 10), 0);
+                totalAmount = Array.from(sideMenu.querySelectorAll('.cart-item-total')).reduce((sum, el) => sum + parseFloat(el.textContent.replace('Rs.', '')), 0);
+
+                updateHeaderCart();
+                updateSideMenuTotal();
             });
         });
     }
-    
-    
-    function updateCartItemTotal(cartItem) {
-    const quantityElement = cartItem.querySelector('.quantity');
-    const quantity = parseInt(quantityElement.textContent, 10);
-    const price = parseFloat(cartItem.querySelector('.cart-item-price').textContent.replace('Rs.', ''));
-    const total = quantity * price;
-    cartItem.querySelector('.cart-item-total').textContent = `Rs.${total.toFixed(2)}`;
 
-    if (quantity === 0) {
-        sideMenu.removeChild(cartItem.parentElement);
+    function updateHeaderCart() {
+        const cartValue = document.querySelector('.header_cart span');
+        cartValue.innerHTML = totalQuantity;
     }
 
-    const cartValue = document.querySelector('.header_cart span');
-    cartValue.innerHTML = sideMenu.childElementCount;
-
-    const totalDisplay = document.getElementById('amt');
-    const totalAmount = Array.from(document.querySelectorAll('.cart-item-total'))
-        .reduce((sum, cartItem) => sum + parseFloat(cartItem.textContent.replace('Rs.', '')), 0);
-
-    totalDisplay.innerHTML = `Rs.${totalAmount.toFixed(2)}`;
-
-    if (sideMenu.childElementCount === 0) {
-        const emptyCartMsg = document.getElementById('emptyCartMsg');
-        emptyCartMsg.style.display = 'block';
+    function updateSideMenuTotal() {
+        const sideMenuTotal = document.getElementById('amt');
+        sideMenuTotal.innerHTML = `Rs.${totalAmount.toFixed(2)}`;
     }
-}
 
+    function updateCartItemTotal(cartItem, quantity, productPrice) {
+        const itemTotalPrice = quantity * productPrice;
+        cartItem.querySelector('.cart-item-total').textContent = `Rs.${itemTotalPrice.toFixed(2)}`;
+    }
 };
